@@ -22,8 +22,8 @@ const restServer = app.listen(8080, () => {
   console.log('Kuro mock REST server running on port 8080');
 });
 
-// WebSocket server
-const wss = new WebSocket.Server({ port: 8081 });
+// WebSocket server on the same port
+const wss = new WebSocket.Server({ server: restServer });
 
 wss.on('connection', (ws) => {
   console.log('New WebSocket connection');
@@ -63,7 +63,7 @@ wss.on('connection', (ws) => {
   });
 });
 
-console.log('Kuro mock WebSocket server running on port 8081');
+console.log('Kuro mock WebSocket server running on port 8080');
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

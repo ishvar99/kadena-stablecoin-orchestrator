@@ -25,9 +25,31 @@ export class KuroListener {
     try {
       await this.connect();
     } catch (error) {
-      logger.error('Failed to start Kuro listener', { error: error instanceof Error ? error.message : String(error) });
-      throw error;
+      logger.warn('Failed to start Kuro WebSocket listener, will retry with polling', { 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+      
+      // Start polling as fallback
+      this.startPolling();
     }
+  }
+
+  /**
+   * Start polling Kuro REST API as fallback
+   */
+  private startPolling(): void {
+    logger.info('Starting Kuro REST API polling as fallback');
+    
+    // Poll every 30 seconds
+    setInterval(async () => {
+      try {
+        await this.pollRestAPI();
+      } catch (error) {
+        logger.error('Error polling Kuro REST API', { 
+          error: error instanceof Error ? error.message : String(error) 
+        });
+      }
+    }, 30000);
   }
 
   private async connect(): Promise<void> {

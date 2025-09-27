@@ -16,7 +16,9 @@ export class QueueService {
     private mintService: any, // Circular dependency, will be injected
     private redeemService: any // Circular dependency, will be injected
   ) {
-    this.redis = new Redis(config.redisUrl);
+    this.redis = new Redis(config.redisUrl, {
+      maxRetriesPerRequest: null, // Fix BullMQ deprecation warning
+    });
     this.initializeQueues();
     this.initializeWorkers();
   }

@@ -66,8 +66,6 @@ services:
       NODE_ENV: "production"
       LOG_LEVEL: "info"
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     ports:
@@ -86,40 +84,16 @@ services:
 
   # Kuro Mock Service (for testing)
   kuro-mock:
-    image: node:18-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile.kuro-mock
     container_name: kuro-mock
-    working_dir: /app
-    command: >
-      sh -c "
-        npm install express ws &&
-        node -e \"
-          const express = require('express');
-          const WebSocket = require('ws');
-          const app = express();
-          
-          app.use(express.json());
-          
-          // REST endpoint
-          app.get('/api/mint-requests/pending', (req, res) => {
-            res.json([]);
-          });
-          
-          app.listen(8080, () => console.log('Kuro mock REST server running'));
-          
-          // WebSocket server
-          const wss = new WebSocket.Server({ port: 8081 });
-          console.log('Kuro mock WebSocket server running');
-        \"
-      "
     ports:
       - "8080:8080"
-      - "8081:8081"
     networks:
       - orchestrator-network
 
 volumes:
-  postgres_data:
-    driver: local
   redis_data:
     driver: local
 

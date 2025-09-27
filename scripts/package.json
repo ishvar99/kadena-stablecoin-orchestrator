@@ -1,0 +1,10 @@
+{
+  "name": "kuro-mock",
+  "version": "1.0.0",
+  "description": "Mock Kuro service for testing",
+  "main": "kuro-mock.js",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2"
+  }
+}

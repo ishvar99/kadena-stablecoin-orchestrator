@@ -19,7 +19,7 @@ COPY prisma/ ./prisma/
 RUN npm ci
 
 # Generate Prisma client
-RUN npx prisma generate
+RUN npx prisma generate --no-engine
 
 # Build the application
 RUN npm run build
@@ -49,7 +49,7 @@ COPY --from=builder --chown=orchestrator:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=orchestrator:nodejs /app/prisma ./prisma
 
 # Generate Prisma client
-RUN npx prisma generate
+RUN npx prisma generate --no-engine
 
 # Create logs directory
 RUN mkdir -p /app/logs && chown -R orchestrator:nodejs /app/logs

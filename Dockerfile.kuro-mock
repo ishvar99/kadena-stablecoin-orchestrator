@@ -2,12 +2,13 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Install dependencies
-RUN npm install express ws
+# Copy package.json and install dependencies
+COPY scripts/package.json .
+RUN npm install
 
 # Create mock Kuro service
 COPY scripts/kuro-mock.js .
 
-EXPOSE 8080 8081
+EXPOSE 8080
 
 CMD ["node", "kuro-mock.js"]
