@@ -135,21 +135,23 @@ describe('AwsKmsSigner', () => {
   });
 
   describe('healthCheck', () => {
-    it('should return true when KMS is healthy', async () => {
+    it('should return healthy true when KMS is healthy', async () => {
       const mockPublicKey = Buffer.from([0x04, ...Array(64).fill(0x01)]);
       mockKmsClient.send.mockResolvedValue({ PublicKey: mockPublicKey });
 
       const result = await signer.healthCheck();
 
-      expect(result).toBe(true);
+      expect(result.healthy).toBe(true);
+      expect(result.recoveredAddress).toBeDefined();
     });
 
-    it('should return false when KMS is unhealthy', async () => {
+    it('should return healthy false when KMS is unhealthy', async () => {
       mockKmsClient.send.mockRejectedValue(new Error('KMS unavailable'));
 
       const result = await signer.healthCheck();
 
-      expect(result).toBe(false);
+      expect(result.healthy).toBe(false);
+      expect(result.recoveredAddress).toBeUndefined();
     });
   });
 });

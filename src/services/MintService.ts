@@ -171,7 +171,8 @@ export class MintService {
    */
   async healthCheck(): Promise<boolean> {
     try {
-      return await this.signer.healthCheck();
+      const result = await this.signer.healthCheck();
+      return result.healthy;
     } catch (error) {
       logger.error('Mint service health check failed', { error: error instanceof Error ? error.message : String(error) });
       return false;

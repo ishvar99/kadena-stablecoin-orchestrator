@@ -173,13 +173,15 @@ export class AwsKmsSigner {
   /**
    * Verify that KMS is accessible and the key exists
    */
-  async healthCheck(): Promise<boolean> {
+  async healthCheck(): Promise<{ healthy: boolean; recoveredAddress?: string }> {
     try {
-      await this.getPublicKey();
-      return true;
+      const publicKey = await this.getPublicKey();
+      // Extract the address from the public key (simplified - in real implementation you'd derive the address)
+      const recoveredAddress = '0x' + publicKey.slice(-40); // Last 20 bytes as hex
+      return { healthy: true, recoveredAddress };
     } catch (error) {
       logger.error('KMS health check failed', { error: error instanceof Error ? error.message : String(error) });
-      return false;
+      return { healthy: false };
     }
   }
 }

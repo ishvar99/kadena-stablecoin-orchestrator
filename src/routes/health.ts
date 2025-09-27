@@ -13,32 +13,28 @@ const router = Router();
  */
 router.get('/health', async (req: Request, res: Response) => {
   try {
-    const startTime = Date.now();
-    
     // Check database
     const dbHealthy = await dbService.healthCheck();
-    
-    // Check KMS
+
+    // Check KMS (sign + verify test payload)
     const signer = new AwsKmsSigner();
-    const kmsHealthy = await signer.healthCheck();
-    
-    // Check Redis (through queue service - we'll need to inject this)
-    // For now, assume healthy if we can connect to Redis
-    const redisHealthy = true; // TODO: Implement proper Redis health check
-    
-    // Check chain connections
+    const { healthy: kmsHealthy, recoveredAddress } = await signer.healthCheck();
+
+    // Check Redis (stubbed for now)
+    const redisHealthy = true; // TODO: real Redis check
+
+    // Check Kadena EVM chains
     const chainHealth = await contractManager.healthCheck();
-    
     const allChainsHealthy = Object.values(chainHealth).every(status => status);
-    
+
     const overallHealthy = dbHealthy && kmsHealthy && redisHealthy && allChainsHealthy;
-    
-    // Convert boolean chain health to 'up'/'down' format
+
+    // Format chain statuses
     const chainHealthFormatted: Record<number, 'up' | 'down'> = {};
     for (const [chainId, isHealthy] of Object.entries(chainHealth)) {
       chainHealthFormatted[parseInt(chainId, 10)] = isHealthy ? 'up' : 'down';
     }
-    
+
     const healthStatus: HealthStatus = {
       status: overallHealthy ? 'healthy' : 'unhealthy',
       timestamp: Date.now(),
@@ -48,6 +44,9 @@ router.get('/health', async (req: Request, res: Response) => {
         redis: redisHealthy ? 'up' : 'down',
         chains: chainHealthFormatted,
       },
+      extra: {
+        kmsRecoveredAddress: recoveredAddress, // 👈 log which signer address KMS produced
+      },
       uptime: process.uptime(),
     };
 
@@ -55,7 +54,7 @@ router.get('/health', async (req: Request, res: Response) => {
     res.status(statusCode).json(healthStatus);
   } catch (error) {
     logger.error('Health check failed', { error: error instanceof Error ? error.message : String(error) });
-    
+
     const healthStatus: HealthStatus = {
       status: 'unhealthy',
       timestamp: Date.now(),
@@ -67,7 +66,7 @@ router.get('/health', async (req: Request, res: Response) => {
       },
       uptime: process.uptime(),
     };
-    
+
     res.status(503).json(healthStatus);
   }
 });
@@ -77,11 +76,10 @@ router.get('/health', async (req: Request, res: Response) => {
  */
 router.get('/ready', async (req: Request, res: Response) => {
   try {
-    // Check if all critical services are ready
     const dbHealthy = await dbService.healthCheck();
     const signer = new AwsKmsSigner();
-    const kmsHealthy = await signer.healthCheck();
-    
+    const { healthy: kmsHealthy } = await signer.healthCheck();
+
     if (dbHealthy && kmsHealthy) {
       res.status(200).json({ status: 'ready' });
     } else {

@@ -55,6 +55,9 @@ export interface HealthStatus {
     redis: 'up' | 'down';
     chains: Record<number, 'up' | 'down'>;
   };
+  extra?: {
+    kmsRecoveredAddress?: string;
+  };
   uptime: number;
 }
 
