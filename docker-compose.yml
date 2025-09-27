@@ -32,11 +32,11 @@ services:
       KMS_KEY_ID: "arn:aws:kms:us-east-1:343218204518:key/f2d33a32-b3dd-4f02-8b0d-c4c0c71f0c4a"
       
       # Chain Configuration (update with actual RPCs)
-      KADENA_EVM_CHAIN_5920_RPC: "http://127.0.0.1:8545/chain/0/evm/rpc"
-      KADENA_EVM_CHAIN_5921_RPC: "http://127.0.0.1:8545/chain/1/evm/rpc"
-      KADENA_EVM_CHAIN_5922_RPC: "http://127.0.0.1:8545/chain/2/evm/rpc"
-      KADENA_EVM_CHAIN_5923_RPC: "http://127.0.0.1:8545/chain/3/evm/rpc"
-      KADENA_EVM_CHAIN_5924_RPC: "http://127.0.0.1:8545/chain/4/evm/rpc"
+      KADENA_EVM_CHAIN_5920_RPC: "http://host.docker.internal:8545/chain/0/evm/rpc"
+      KADENA_EVM_CHAIN_5921_RPC: "http://host.docker.internal:8545/chain/1/evm/rpc"
+      KADENA_EVM_CHAIN_5922_RPC: "http://host.docker.internal:8545/chain/2/evm/rpc"
+      KADENA_EVM_CHAIN_5923_RPC: "http://host.docker.internal:8545/chain/3/evm/rpc"
+      KADENA_EVM_CHAIN_5924_RPC: "http://host.docker.internal:8545/chain/4/evm/rpc"
       
       # Contract Addresses (update with actual addresses)
       STABLECOIN_CONTRACT_ADDRESS_5920: "0x948B3c65b89DF0B4894ABE91E6D02FE579834F8F"
@@ -92,6 +92,8 @@ services:
       - "8080:8080"
     networks:
       - orchestrator-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   redis_data:
