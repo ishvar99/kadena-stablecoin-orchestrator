@@ -1,0 +1,40 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
+    ],
+    "name": "isKYCVerified",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "users",
+        "type": "address[]"
+      }
+    ],
+    "name": "batchIsKYCVerified",
+    "outputs": [
+      {
+        "internalType": "bool[]",
+        "name": "",
+        "type": "bool[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

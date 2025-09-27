@@ -1,0 +1,150 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: orchestrator-postgres
+    environment:
+      POSTGRES_DB: orchestrator_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - orchestrator-network
+
+  # Redis for Queue Management
+  redis:
+    image: redis:7-alpine
+    container_name: orchestrator-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - orchestrator-network
+
+  # Orchestrator Service
+  orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: orchestrator-service
+    environment:
+      # Database
+      DATABASE_URL: "postgresql://postgres:password@postgres:5432/orchestrator_db"
+      
+      # AWS KMS (configure with your actual values)
+      AWS_REGION: "us-east-1"
+      KMS_KEY_ID: "arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012"
+      
+      # Chain Configuration (update with actual RPCs)
+      KADENA_EVM_CHAIN_5920_RPC: "https://api-evm-5920.kadena.network"
+      KADENA_EVM_CHAIN_5921_RPC: "https://api-evm-5921.kadena.network"
+      KADENA_EVM_CHAIN_5922_RPC: "https://api-evm-5922.kadena.network"
+      KADENA_EVM_CHAIN_5923_RPC: "https://api-evm-5923.kadena.network"
+      KADENA_EVM_CHAIN_5924_RPC: "https://api-evm-5924.kadena.network"
+      
+      # Contract Addresses (update with actual addresses)
+      STABLECOIN_CONTRACT_ADDRESS_5920: "0x1234567890123456789012345678901234567890"
+      STABLECOIN_CONTRACT_ADDRESS_5921: "0x1234567890123456789012345678901234567890"
+      STABLECOIN_CONTRACT_ADDRESS_5922: "0x1234567890123456789012345678901234567890"
+      STABLECOIN_CONTRACT_ADDRESS_5923: "0x1234567890123456789012345678901234567890"
+      STABLECOIN_CONTRACT_ADDRESS_5924: "0x1234567890123456789012345678901234567890"
+      
+      KYC_REGISTRY_CONTRACT_ADDRESS_5920: "0x9876543210987654321098765432109876543210"
+      
+      # Relayer Private Keys (update with actual keys - use secrets in production)
+      RELAYER_PRIVATE_KEY_5920: "0x1234567890123456789012345678901234567890123456789012345678901234"
+      RELAYER_PRIVATE_KEY_5921: "0x1234567890123456789012345678901234567890123456789012345678901234"
+      RELAYER_PRIVATE_KEY_5922: "0x1234567890123456789012345678901234567890123456789012345678901234"
+      RELAYER_PRIVATE_KEY_5923: "0x1234567890123456789012345678901234567890123456789012345678901234"
+      RELAYER_PRIVATE_KEY_5924: "0x1234567890123456789012345678901234567890123456789012345678901234"
+      
+      # Kuro Service Configuration
+      KURO_WEBSOCKET_URL: "ws://kuro-mock:8080/events"
+      KURO_REST_URL: "http://kuro-mock:8080/api"
+      
+      # Redis
+      REDIS_URL: "redis://redis:6379"
+      
+      # Server
+      PORT: "3000"
+      NODE_ENV: "production"
+      LOG_LEVEL: "info"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - orchestrator-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health/live', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Kuro Mock Service (for testing)
+  kuro-mock:
+    image: node:18-alpine
+    container_name: kuro-mock
+    working_dir: /app
+    command: >
+      sh -c "
+        npm install express ws &&
+        node -e \"
+          const express = require('express');
+          const WebSocket = require('ws');
+          const app = express();
+          
+          app.use(express.json());
+          
+          // REST endpoint
+          app.get('/api/mint-requests/pending', (req, res) => {
+            res.json([]);
+          });
+          
+          app.listen(8080, () => console.log('Kuro mock REST server running'));
+          
+          // WebSocket server
+          const wss = new WebSocket.Server({ port: 8081 });
+          console.log('Kuro mock WebSocket server running');
+        \"
+      "
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    networks:
+      - orchestrator-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  orchestrator-network:
+    driver: bridge

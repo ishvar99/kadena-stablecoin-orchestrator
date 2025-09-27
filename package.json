@@ -1,0 +1,52 @@
+{
+  "name": "orchestrator-service",
+  "version": "1.0.0",
+  "description": "Production-grade Orchestrator service for stablecoin launchpad",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix"
+  },
+  "keywords": ["blockchain", "stablecoin", "orchestrator", "kadena", "evm"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-kms": "^3.490.0",
+    "express": "^4.18.2",
+    "ethers": "^6.8.1",
+    "dotenv": "^16.3.1",
+    "pino": "^8.17.2",
+    "pino-pretty": "^10.3.1",
+    "ws": "^8.14.2",
+    "axios": "^1.6.2",
+    "bullmq": "^4.15.4",
+    "ioredis": "^5.3.2",
+    "pg": "^8.11.3",
+    "prisma": "^5.7.1",
+    "@prisma/client": "^5.7.1",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "joi": "^17.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.4",
+    "@types/express": "^4.17.21",
+    "@types/ws": "^8.5.10",
+    "@types/pg": "^8.10.9",
+    "@types/cors": "^2.8.17",
+    "@types/jest": "^29.5.8",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
+    "eslint": "^8.54.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "tsx": "^4.6.2",
+    "typescript": "^5.3.3"
+  }
+}

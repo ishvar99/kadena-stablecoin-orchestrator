@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model RequestRecord {
+  id          String   @id @default(cuid())
+  requestId   String   @unique
+  type        RequestType
+  status      RequestStatus
+  userAddress String
+  amount      String   // Store as string to preserve precision
+  chainId     Int
+  txHash      String?
+  errorMessage String?
+  fiatRef     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("request_records")
+}
+
+model Nonce {
+  id        String   @id @default(cuid())
+  address   String   @unique
+  chainId   Int
+  nonce     BigInt   @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([address, chainId])
+  @@map("nonces")
+}
+
+model HealthCheck {
+  id        String   @id @default(cuid())
+  service   String
+  status    String
+  timestamp DateTime @default(now())
+  details   Json?
+
+  @@map("health_checks")
+}
+
+enum RequestType {
+  MINT
+  REDEEM
+}
+
+enum RequestStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
