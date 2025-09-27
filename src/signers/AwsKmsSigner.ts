@@ -19,10 +19,10 @@ export class AwsKmsSigner {
   /**
    * Sign a MintApproval typed data structure
    */
-  async signMintApproval(data: MintApproval, chainId: number = 5920): Promise<string> {
-    const contractAddress = config.chains[chainId]?.stablecoinAddress;
+  async signMintApproval(data: MintApproval, chainId: number = config.chainId): Promise<string> {
+    const contractAddress = config.stablecoinAddress;
     if (!contractAddress) {
-      throw new Error(`No contract address found for chain ${chainId}`);
+      throw new Error('No contract address found');
     }
 
     const domain = getDomainForChain(chainId, contractAddress);
@@ -32,10 +32,10 @@ export class AwsKmsSigner {
   /**
    * Sign a RedeemFinalize typed data structure
    */
-  async signRedeemFinalize(data: RedeemFinalize, chainId: number = 5920): Promise<string> {
-    const contractAddress = config.chains[chainId]?.stablecoinAddress;
+  async signRedeemFinalize(data: RedeemFinalize, chainId: number = config.chainId): Promise<string> {
+    const contractAddress = config.stablecoinAddress;
     if (!contractAddress) {
-      throw new Error(`No contract address found for chain ${chainId}`);
+      throw new Error('No contract address found');
     }
 
     const domain = getDomainForChain(chainId, contractAddress);

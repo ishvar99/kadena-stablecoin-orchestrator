@@ -46,7 +46,7 @@ export class MintService {
         status: 'PENDING',
         userAddress: user,
         amount,
-        chainId: 5920, // Main chain
+        chainId: config.chainId,
         fiatRef,
       });
 
@@ -68,20 +68,19 @@ export class MintService {
    */
   async executeMint(request: MintRequest): Promise<TransactionResult> {
     const { requestId, user, amount, fiatRef } = request;
-    const chainId = 5920; // Main chain
     
-    logger.info('Executing mint transaction', { requestId, user, amount, chainId });
+    logger.info('Executing mint transaction', { requestId, user, amount, chainId: config.chainId });
 
     try {
       // Update status to processing
       await dbService.updateRequestStatus(requestId, 'PROCESSING');
 
       // Get contract and wallet
-      const contract = contractManager.getContract(chainId, 'stablecoin') as any;
-      const wallet = contractManager.getWallet(chainId);
+      const contract = contractManager.getContract('stablecoin') as any;
+      const wallet = contractManager.getWallet();
 
       // Get next nonce for the relayer address
-      const nonce = await dbService.getNextNonce(wallet.address, chainId);
+      const nonce = await dbService.getNextNonce(wallet.address, config.chainId);
       
       // Set deadline (24 hours from now)
       const deadline = BigInt(Math.floor(Date.now() / 1000) + 24 * 60 * 60);
@@ -96,7 +95,7 @@ export class MintService {
       };
 
       // Sign the mint approval
-      const signature = await this.signer.signMintApproval(mintData, chainId);
+      const signature = await this.signer.signMintApproval(mintData, config.chainId);
       
       logger.debug('Mint approval signed', { requestId, signature });
 

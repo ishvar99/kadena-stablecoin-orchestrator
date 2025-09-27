@@ -10,66 +10,58 @@ export interface ContractInstances {
 }
 
 export class ContractManager {
-  private providers: Record<number, ethers.JsonRpcProvider> = {};
-  private contracts: Record<number, ContractInstances> = {};
+  private provider!: ethers.JsonRpcProvider;
+  private contracts!: ContractInstances;
+  private wallet!: ethers.Wallet;
 
   constructor() {
-    this.initializeProviders();
+    this.initializeProvider();
     this.initializeContracts();
+    this.initializeWallet();
   }
 
-  private initializeProviders() {
-    for (const [chainId, chainConfig] of Object.entries(config.chains)) {
-      const chainIdNum = parseInt(chainId, 10);
-      this.providers[chainIdNum] = new ethers.JsonRpcProvider(chainConfig.rpcUrl);
-    }
+  private initializeProvider() {
+    this.provider = new ethers.JsonRpcProvider(config.rpcUrl);
   }
 
   private initializeContracts() {
-    for (const [chainId, chainConfig] of Object.entries(config.chains)) {
-      const chainIdNum = parseInt(chainId, 10);
-      const provider = this.providers[chainIdNum];
-
-      this.contracts[chainIdNum] = {
-        stablecoin: new ethers.Contract(
-          chainConfig.stablecoinAddress,
-          StablecoinABI,
-          provider
-        ),
-        kycRegistry: new ethers.Contract(
-          config.chains[5920].stablecoinAddress, // KYC registry only on main chain
-          KYCRegistryABI,
-          provider
-        ),
-      };
-    }
+    this.contracts = {
+      stablecoin: new ethers.Contract(
+        config.stablecoinAddress,
+        StablecoinABI,
+        this.provider
+      ),
+      kycRegistry: new ethers.Contract(
+        config.kycRegistryAddress,
+        KYCRegistryABI,
+        this.provider
+      ),
+    };
   }
 
-  getContract(chainId: number, contractName: keyof ContractInstances): ethers.Contract {
-    const contract = this.contracts[chainId]?.[contractName];
+  private initializeWallet() {
+    this.wallet = new ethers.Wallet(config.relayerPrivateKey, this.provider);
+  }
+
+  getContract(contractName: keyof ContractInstances): ethers.Contract {
+    const contract = this.contracts[contractName];
     if (!contract) {
-      throw new Error(`Contract ${contractName} not found for chain ${chainId}`);
+      throw new Error(`Contract ${contractName} not found`);
     }
     return contract;
   }
 
-  getProvider(chainId: number): ethers.JsonRpcProvider {
-    const provider = this.providers[chainId];
-    if (!provider) {
-      throw new Error(`Provider not found for chain ${chainId}`);
-    }
-    return provider;
+  getProvider(): ethers.JsonRpcProvider {
+    return this.provider;
   }
 
-  getWallet(chainId: number): ethers.Wallet {
-    const provider = this.getProvider(chainId);
-    const privateKey = config.chains[chainId].relayerPrivateKey;
-    return new ethers.Wallet(privateKey, provider);
+  getWallet(): ethers.Wallet {
+    return this.wallet;
   }
 
-  async isKYCVerified(userAddress: string, chainId: number = 5920): Promise<boolean> {
+  async isKYCVerified(userAddress: string): Promise<boolean> {
     try {
-      const kycRegistry = this.getContract(chainId, 'kycRegistry') as any;
+      const kycRegistry = this.getContract('kycRegistry') as any;
       return await kycRegistry.isKYCVerified(userAddress);
     } catch (error) {
       console.error('Error checking KYC status:', error);
@@ -78,23 +70,16 @@ export class ContractManager {
   }
 
   /**
-   * Health check for all contract connections
+   * Health check for contract connection
    */
-  async healthCheck(): Promise<Record<number, boolean>> {
-    const results: Record<number, boolean> = {};
-    
-    for (const chainId of Object.keys(config.chains).map(Number)) {
-      try {
-        const provider = this.getProvider(chainId);
-        await provider.getBlockNumber();
-        results[chainId] = true;
-      } catch (error) {
-        console.error(`Health check failed for chain ${chainId}:`, error);
-        results[chainId] = false;
-      }
+  async healthCheck(): Promise<boolean> {
+    try {
+      await this.provider.getBlockNumber();
+      return true;
+    } catch (error) {
+      console.error('Health check failed:', error);
+      return false;
     }
-    
-    return results;
   }
 }
 

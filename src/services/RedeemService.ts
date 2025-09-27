@@ -20,9 +20,9 @@ export class RedeemService {
    * Process a redeem request from EVM
    */
   async processRedeemRequest(event: RedeemRequestedEvent): Promise<void> {
-    const { requestId, from, amount, chainId } = event;
+    const { requestId, from, amount } = event;
     
-    logger.info('Processing redeem request', { requestId, from, amount: amount.toString(), chainId });
+    logger.info('Processing redeem request', { requestId, from, amount: amount.toString(), chainId: config.chainId });
 
     try {
       // Check if request already exists (idempotency)
@@ -39,7 +39,7 @@ export class RedeemService {
         status: 'PENDING',
         userAddress: from,
         amount: amount.toString(),
-        chainId,
+        chainId: config.chainId,
       });
 
       // Add to processing queue
@@ -59,20 +59,20 @@ export class RedeemService {
    * Execute the actual redeem finalization transaction
    */
   async executeRedeem(event: RedeemRequestedEvent): Promise<TransactionResult> {
-    const { requestId, from, amount, chainId } = event;
+    const { requestId, from, amount } = event;
     
-    logger.info('Executing redeem transaction', { requestId, from, amount: amount.toString(), chainId });
+    logger.info('Executing redeem transaction', { requestId, from, amount: amount.toString(), chainId: config.chainId });
 
     try {
       // Update status to processing
       await dbService.updateRequestStatus(requestId, 'PROCESSING');
 
       // Get contract and wallet
-      const contract = contractManager.getContract(chainId, 'stablecoin') as any;
-      const wallet = contractManager.getWallet(chainId);
+      const contract = contractManager.getContract('stablecoin') as any;
+      const wallet = contractManager.getWallet();
 
       // Get next nonce for the relayer address
-      const nonce = await dbService.getNextNonce(wallet.address, chainId);
+      const nonce = await dbService.getNextNonce(wallet.address, config.chainId);
       
       // Set deadline (24 hours from now)
       const deadline = BigInt(Math.floor(Date.now() / 1000) + 24 * 60 * 60);
@@ -87,7 +87,7 @@ export class RedeemService {
       };
 
       // Sign the redeem finalize
-      const signature = await this.signer.signRedeemFinalize(redeemData, chainId);
+      const signature = await this.signer.signRedeemFinalize(redeemData, config.chainId);
       
       logger.debug('Redeem finalize signed', { requestId, signature });
 

@@ -5,6 +5,7 @@ import { contractManager } from '../contracts';
 import { AwsKmsSigner } from '../signers/AwsKmsSigner';
 import logger from '../logger';
 import { HealthStatus } from '../types';
+import { config } from '../config';
 
 const router = Router();
 
@@ -23,17 +24,15 @@ router.get('/', async (req: Request, res: Response) => {
     // Check Redis (stubbed for now)
     const redisHealthy = true; // TODO: real Redis check
 
-    // Check Kadena EVM chains
-    const chainHealth = await contractManager.healthCheck();
-    const allChainsHealthy = Object.values(chainHealth).every(status => status);
+    // Check Kadena EVM chain
+    const chainHealthy = await contractManager.healthCheck();
 
-    const overallHealthy = dbHealthy && kmsHealthy && redisHealthy && allChainsHealthy;
+    const overallHealthy = dbHealthy && kmsHealthy && redisHealthy && chainHealthy;
 
-    // Format chain statuses
-    const chainHealthFormatted: Record<number, 'up' | 'down'> = {};
-    for (const [chainId, isHealthy] of Object.entries(chainHealth)) {
-      chainHealthFormatted[parseInt(chainId, 10)] = isHealthy ? 'up' : 'down';
-    }
+    // Format chain status
+    const chainHealthFormatted: Record<number, 'up' | 'down'> = {
+      [config.chainId]: chainHealthy ? 'up' : 'down'
+    };
 
     const healthStatus: HealthStatus = {
       status: overallHealthy ? 'healthy' : 'unhealthy',
