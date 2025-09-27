@@ -1,6 +1,6 @@
 const express = require('express');
 const WebSocket = require('ws');
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 
 const app = express();
 app.use(express.json());
@@ -13,7 +13,7 @@ app.get('/api/mint-requests/pending', (req, res) => {
 
 app.post('/api/mint-requests', (req, res) => {
   // Simulate creating a mint request
-  const requestId = uuidv4();
+  const requestId = crypto.randomUUID();
   res.json({ requestId, status: 'created' });
 });
 
@@ -38,7 +38,7 @@ wss.on('connection', (ws) => {
   const interval = setInterval(() => {
     if (ws.readyState === WebSocket.OPEN) {
       const mintEvent = {
-        requestId: uuidv4(),
+        requestId: crypto.randomUUID(),
         user: '0x742d35Cc6634C0532925a3b8D8C9c9B6C6c8C8C8',
         amount: '1000000000000000000', // 1 ETH
         fiatRef: `REF-${Date.now()}`,

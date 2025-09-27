@@ -47,10 +47,10 @@ export class RedeemService {
       
       logger.info('Redeem request queued for processing', { requestId });
     } catch (error) {
-      logger.error('Error processing redeem request', { requestId, error: error.message });
+      logger.error('Error processing redeem request', { requestId, error: error instanceof Error ? error.message : String(error) });
       
       // Update database with error
-      await dbService.updateRequestStatus(requestId, 'FAILED', undefined, error.message);
+      await dbService.updateRequestStatus(requestId, 'FAILED', undefined, error instanceof Error ? error.message : String(error));
       throw error;
     }
   }
@@ -68,7 +68,7 @@ export class RedeemService {
       await dbService.updateRequestStatus(requestId, 'PROCESSING');
 
       // Get contract and wallet
-      const contract = contractManager.getContract(chainId, 'stablecoin');
+      const contract = contractManager.getContract(chainId, 'stablecoin') as any;
       const wallet = contractManager.getWallet(chainId);
 
       // Get next nonce for the relayer address
@@ -142,10 +142,10 @@ export class RedeemService {
         throw new Error('Redeem transaction failed');
       }
     } catch (error) {
-      logger.error('Error executing redeem transaction', { requestId, error: error.message });
+      logger.error('Error executing redeem transaction', { requestId, error: error instanceof Error ? error.message : String(error) });
       
       // Update database with error
-      await dbService.updateRequestStatus(requestId, 'FAILED', undefined, error.message);
+      await dbService.updateRequestStatus(requestId, 'FAILED', undefined, error instanceof Error ? error.message : String(error));
       throw error;
     }
   }
@@ -176,7 +176,7 @@ export class RedeemService {
     try {
       return await this.signer.healthCheck();
     } catch (error) {
-      logger.error('Redeem service health check failed', { error: error.message });
+      logger.error('Redeem service health check failed', { error: error instanceof Error ? error.message : String(error) });
       return false;
     }
   }

@@ -157,7 +157,7 @@ export class DatabaseService {
       await prisma.$queryRaw`SELECT 1`;
       return true;
     } catch (error) {
-      logger.error('Database health check failed', { error: error.message });
+      logger.error('Database health check failed', { error: error instanceof Error ? error.message : String(error) });
       return false;
     }
   }

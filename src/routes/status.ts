@@ -13,13 +13,15 @@ router.get('/:requestId', async (req: Request, res: Response) => {
     const { requestId } = req.params;
     
     if (!requestId) {
-      return res.status(400).json({ error: 'Request ID is required' });
+      res.status(400).json({ error: 'Request ID is required' });
+      return;
     }
 
     const request = await dbService.getRequest(requestId);
     
     if (!request) {
-      return res.status(404).json({ error: 'Request not found' });
+      res.status(404).json({ error: 'Request not found' });
+      return;
     }
 
     res.json({
@@ -36,7 +38,7 @@ router.get('/:requestId', async (req: Request, res: Response) => {
       updatedAt: request.updatedAt,
     });
   } catch (error) {
-    logger.error('Error getting request status', { error: error.message, requestId: req.params.requestId });
+    logger.error('Error getting request status', { error: error instanceof Error ? error.message : String(error), requestId: req.params.requestId });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -65,7 +67,7 @@ router.get('/', async (req: Request, res: Response) => {
       filters: { type, status },
     });
   } catch (error) {
-    logger.error('Error getting recent requests', { error: error.message });
+    logger.error('Error getting recent requests', { error: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Internal server error' });
   }
 });

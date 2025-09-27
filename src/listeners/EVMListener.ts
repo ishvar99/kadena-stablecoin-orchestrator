@@ -7,7 +7,7 @@ import { RedeemService } from '../services/RedeemService';
 
 export class EVMListener {
   private providers: Record<number, ethers.JsonRpcProvider> = {};
-  private contracts: Record<number, ethers.Contract> = {};
+  private contracts: Record<number, any> = {};
   private isListening = false;
   private redeemService: RedeemService;
 
@@ -84,7 +84,7 @@ export class EVMListener {
           logger.error('Error processing RedeemRequested event', { 
             requestId, 
             chainId,
-            error: error.message 
+            error: error instanceof Error ? error.message : String(error)
           });
         }
       });
@@ -106,7 +106,7 @@ export class EVMListener {
           logger.error('Error processing Minted event', { 
             requestId, 
             chainId,
-            error: error.message 
+            error: error instanceof Error ? error.message : String(error)
           });
         }
       });
@@ -128,14 +128,14 @@ export class EVMListener {
           logger.error('Error processing Redeemed event', { 
             requestId, 
             chainId,
-            error: error.message 
+            error: error instanceof Error ? error.message : String(error)
           });
         }
       });
 
       logger.info(`EVM listener started for chain ${chainId}`);
     } catch (error) {
-      logger.error(`Failed to start EVM listener for chain ${chainId}`, { error: error.message });
+      logger.error(`Failed to start EVM listener for chain ${chainId}`, { error: error instanceof Error ? error.message : String(error) });
     }
   }
 
@@ -153,7 +153,7 @@ export class EVMListener {
       const events = await contract.queryFilter(filter, fromBlock, toBlock);
 
       for (const event of events) {
-        if (event.args) {
+        if ('args' in event && event.args) {
           const [requestId, from, amount] = event.args;
           
           const redeemEvent: RedeemRequestedEvent = {
@@ -171,7 +171,7 @@ export class EVMListener {
 
       logger.info(`Processed ${events.length} historical events for chain ${chainId}`);
     } catch (error) {
-      logger.error(`Error processing historical events for chain ${chainId}`, { error: error.message });
+      logger.error(`Error processing historical events for chain ${chainId}`, { error: error instanceof Error ? error.message : String(error) });
     }
   }
 
@@ -205,7 +205,7 @@ export class EVMListener {
         await provider.getBlockNumber();
         results[parseInt(chainId, 10)] = true;
       } catch (error) {
-        logger.error(`Health check failed for chain ${chainId}`, { error: error.message });
+        logger.error(`Health check failed for chain ${chainId}`, { error: error instanceof Error ? error.message : String(error) });
         results[parseInt(chainId, 10)] = false;
       }
     }

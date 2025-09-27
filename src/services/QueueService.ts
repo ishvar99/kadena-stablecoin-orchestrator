@@ -7,10 +7,10 @@ import { RedeemRequestedEvent } from '../types';
 
 export class QueueService {
   private redis: Redis;
-  private mintQueue: Queue;
-  private redeemQueue: Queue;
-  private mintWorker: Worker;
-  private redeemWorker: Worker;
+  private mintQueue!: Queue;
+  private redeemQueue!: Queue;
+  private mintWorker!: Worker;
+  private redeemWorker!: Worker;
 
   constructor(
     private mintService: any, // Circular dependency, will be injected
@@ -160,7 +160,7 @@ export class QueueService {
       await this.redis.ping();
       return true;
     } catch (error) {
-      logger.error('Queue service health check failed', { error: error.message });
+      logger.error('Queue service health check failed', { error: error instanceof Error ? error.message : String(error) });
       return false;
     }
   }

@@ -55,10 +55,10 @@ export class MintService {
       
       logger.info('Mint request queued for processing', { requestId });
     } catch (error) {
-      logger.error('Error processing mint request', { requestId, error: error.message });
+      logger.error('Error processing mint request', { requestId, error: error instanceof Error ? error.message : String(error) });
       
       // Update database with error
-      await dbService.updateRequestStatus(requestId, 'FAILED', undefined, error.message);
+      await dbService.updateRequestStatus(requestId, 'FAILED', undefined, error instanceof Error ? error.message : String(error));
       throw error;
     }
   }
@@ -77,7 +77,7 @@ export class MintService {
       await dbService.updateRequestStatus(requestId, 'PROCESSING');
 
       // Get contract and wallet
-      const contract = contractManager.getContract(chainId, 'stablecoin');
+      const contract = contractManager.getContract(chainId, 'stablecoin') as any;
       const wallet = contractManager.getWallet(chainId);
 
       // Get next nonce for the relayer address
@@ -151,10 +151,10 @@ export class MintService {
         throw new Error('Mint transaction failed');
       }
     } catch (error) {
-      logger.error('Error executing mint transaction', { requestId, error: error.message });
+      logger.error('Error executing mint transaction', { requestId, error: error instanceof Error ? error.message : String(error) });
       
       // Update database with error
-      await dbService.updateRequestStatus(requestId, 'FAILED', undefined, error.message);
+      await dbService.updateRequestStatus(requestId, 'FAILED', undefined, error instanceof Error ? error.message : String(error));
       throw error;
     }
   }
@@ -173,7 +173,7 @@ export class MintService {
     try {
       return await this.signer.healthCheck();
     } catch (error) {
-      logger.error('Mint service health check failed', { error: error.message });
+      logger.error('Mint service health check failed', { error: error instanceof Error ? error.message : String(error) });
       return false;
     }
   }

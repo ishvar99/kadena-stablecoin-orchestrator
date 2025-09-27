@@ -83,7 +83,7 @@ export class AwsKmsSigner {
 
       return signature;
     } catch (error) {
-      logger.error('Error signing with KMS', { error: error.message, keyId: this.keyId });
+      logger.error('Error signing with KMS', { error: error instanceof Error ? error.message : String(error), keyId: this.keyId });
       throw error;
     }
   }
@@ -165,7 +165,7 @@ export class AwsKmsSigner {
       const publicKey = Buffer.from(response.PublicKey);
       return '0x' + publicKey.toString('hex');
     } catch (error) {
-      logger.error('Error getting public key from KMS', { error: error.message });
+      logger.error('Error getting public key from KMS', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -178,7 +178,7 @@ export class AwsKmsSigner {
       await this.getPublicKey();
       return true;
     } catch (error) {
-      logger.error('KMS health check failed', { error: error.message });
+      logger.error('KMS health check failed', { error: error instanceof Error ? error.message : String(error) });
       return false;
     }
   }

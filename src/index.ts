@@ -19,11 +19,11 @@ import { dbService } from './db';
 class OrchestratorApp {
   private app: express.Application;
   private server: any;
-  private mintService: MintService;
-  private redeemService: RedeemService;
-  private queueService: QueueService;
-  private kuroListener: KuroListener;
-  private evmListener: EVMListener;
+  private mintService!: MintService;
+  private redeemService!: RedeemService;
+  private queueService!: QueueService;
+  private kuroListener!: KuroListener;
+  private evmListener!: EVMListener;
 
   constructor() {
     this.app = express();
@@ -124,7 +124,7 @@ class OrchestratorApp {
       this.setupGracefulShutdown();
       
     } catch (error) {
-      logger.error('Failed to start orchestrator service', { error: error.message });
+      logger.error('Failed to start orchestrator service', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -152,7 +152,7 @@ class OrchestratorApp {
         logger.info('Graceful shutdown completed');
         process.exit(0);
       } catch (error) {
-        logger.error('Error during graceful shutdown', { error: error.message });
+        logger.error('Error during graceful shutdown', { error: error instanceof Error ? error.message : String(error) });
         process.exit(1);
       }
     };
@@ -168,7 +168,7 @@ class OrchestratorApp {
     
     // Handle unhandled promise rejections
     process.on('unhandledRejection', (reason, promise) => {
-      logger.error('Unhandled rejection', { reason, promise });
+      logger.error('Unhandled rejection', { reason: String(reason), promise });
       process.exit(1);
     });
   }
@@ -185,7 +185,7 @@ class OrchestratorApp {
 if (require.main === module) {
   const app = new OrchestratorApp();
   app.start().catch((error) => {
-    logger.error('Failed to start application', { error: error.message });
+    logger.error('Failed to start application', { error: error instanceof Error ? error.message : String(error) });
     process.exit(1);
   });
 }

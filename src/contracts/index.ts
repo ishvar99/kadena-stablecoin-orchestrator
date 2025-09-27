@@ -2,10 +2,11 @@ import { ethers } from 'ethers';
 import { config } from '../config';
 import StablecoinABI from './Stablecoin.json';
 import KYCRegistryABI from './KYCRegistry.json';
+import { StablecoinContract, KYCRegistryContract } from './interfaces';
 
 export interface ContractInstances {
-  stablecoin: ethers.Contract;
-  kycRegistry: ethers.Contract;
+  stablecoin: StablecoinContract;
+  kycRegistry: KYCRegistryContract;
 }
 
 export class ContractManager {
@@ -68,7 +69,7 @@ export class ContractManager {
 
   async isKYCVerified(userAddress: string, chainId: number = 5920): Promise<boolean> {
     try {
-      const kycRegistry = this.getContract(chainId, 'kycRegistry');
+      const kycRegistry = this.getContract(chainId, 'kycRegistry') as any;
       return await kycRegistry.isKYCVerified(userAddress);
     } catch (error) {
       console.error('Error checking KYC status:', error);

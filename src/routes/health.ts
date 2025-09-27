@@ -33,6 +33,12 @@ router.get('/health', async (req: Request, res: Response) => {
     
     const overallHealthy = dbHealthy && kmsHealthy && redisHealthy && allChainsHealthy;
     
+    // Convert boolean chain health to 'up'/'down' format
+    const chainHealthFormatted: Record<number, 'up' | 'down'> = {};
+    for (const [chainId, isHealthy] of Object.entries(chainHealth)) {
+      chainHealthFormatted[parseInt(chainId, 10)] = isHealthy ? 'up' : 'down';
+    }
+    
     const healthStatus: HealthStatus = {
       status: overallHealthy ? 'healthy' : 'unhealthy',
       timestamp: Date.now(),
@@ -40,7 +46,7 @@ router.get('/health', async (req: Request, res: Response) => {
         database: dbHealthy ? 'up' : 'down',
         kms: kmsHealthy ? 'up' : 'down',
         redis: redisHealthy ? 'up' : 'down',
-        chains: chainHealth,
+        chains: chainHealthFormatted,
       },
       uptime: process.uptime(),
     };
@@ -48,7 +54,7 @@ router.get('/health', async (req: Request, res: Response) => {
     const statusCode = overallHealthy ? 200 : 503;
     res.status(statusCode).json(healthStatus);
   } catch (error) {
-    logger.error('Health check failed', { error: error.message });
+    logger.error('Health check failed', { error: error instanceof Error ? error.message : String(error) });
     
     const healthStatus: HealthStatus = {
       status: 'unhealthy',
@@ -82,7 +88,7 @@ router.get('/ready', async (req: Request, res: Response) => {
       res.status(503).json({ status: 'not ready' });
     }
   } catch (error) {
-    logger.error('Readiness check failed', { error: error.message });
+    logger.error('Readiness check failed', { error: error instanceof Error ? error.message : String(error) });
     res.status(503).json({ status: 'not ready' });
   }
 });

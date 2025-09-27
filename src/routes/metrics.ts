@@ -30,7 +30,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     res.json(metrics);
   } catch (error) {
-    logger.error('Error getting metrics', { error: error.message });
+    logger.error('Error getting metrics', { error: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -60,7 +60,7 @@ router.get('/queues', async (req: Request, res: Response) => {
 
     res.json(queueMetrics);
   } catch (error) {
-    logger.error('Error getting queue metrics', { error: error.message });
+    logger.error('Error getting queue metrics', { error: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Internal server error' });
   }
 });

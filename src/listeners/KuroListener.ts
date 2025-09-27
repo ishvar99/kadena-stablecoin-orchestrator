@@ -25,7 +25,7 @@ export class KuroListener {
     try {
       await this.connect();
     } catch (error) {
-      logger.error('Failed to start Kuro listener', { error: error.message });
+      logger.error('Failed to start Kuro listener', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -45,9 +45,9 @@ export class KuroListener {
           try {
             const event = JSON.parse(data.toString()) as KuroMintEvent;
             await this.handleMintEvent(event);
-          } catch (error) {
-            logger.error('Error processing Kuro message', { error: error.message, data: data.toString() });
-          }
+        } catch (error) {
+          logger.error('Error processing Kuro message', { error: error instanceof Error ? error.message : String(error), data: data.toString() });
+        }
         });
 
         this.ws.on('close', (code, reason) => {
@@ -56,7 +56,7 @@ export class KuroListener {
         });
 
         this.ws.on('error', (error) => {
-          logger.error('Kuro WebSocket error', { error: error.message });
+          logger.error('Kuro WebSocket error', { error: error instanceof Error ? error.message : String(error) });
           reject(error);
         });
       } catch (error) {
@@ -79,7 +79,7 @@ export class KuroListener {
     } catch (error) {
       logger.error('Error processing mint event', { 
         requestId: event.requestId, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   }
@@ -95,7 +95,7 @@ export class KuroListener {
 
       setTimeout(() => {
         this.connect().catch((error) => {
-          logger.error('Reconnection attempt failed', { error: error.message });
+          logger.error('Reconnection attempt failed', { error: error instanceof Error ? error.message : String(error) });
         });
       }, delay);
     } else {
@@ -115,7 +115,7 @@ export class KuroListener {
         await this.handleMintEvent(event);
       }
     } catch (error) {
-      logger.error('Error polling Kuro REST API', { error: error.message });
+      logger.error('Error polling Kuro REST API', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 
