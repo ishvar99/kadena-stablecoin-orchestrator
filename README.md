@@ -2,6 +2,11 @@
 
 A production-grade orchestrator service for launching stablecoins on Kadena EVM with compliance and security built-in. This service acts as a bridge between compliance systems (Kuro) and the blockchain, handling KYC approvals, contract deployment, and minting operations.
 
+## Linked Codebases:
+1. KadenaScaffold & EVM Contract: (https://github.com/iamudityadav/kadena-institutional-stablecoin-launchpad)
+2. Kuro Legacy chain (with new ubuntu base): (https://github.com/prabuddh1/Kuro-Kadena)
+
+
 ## 🏗️ Architecture
 
 ```
