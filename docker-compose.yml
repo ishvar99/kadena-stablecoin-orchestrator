@@ -88,6 +88,29 @@ services:
     networks:
       - orchestrator-network
 
+  # Frontend Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: stablecoin-launcher-frontend
+    environment:
+      # WalletConnect Project ID (update with actual value)
+      NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID: "your-walletconnect-project-id"
+      
+      # KYC Registry Contract Address
+      NEXT_PUBLIC_KYC_REGISTRY_ADDRESS: "0x2814b08ddDaF12e6042a54BCB5f33cb962EdE28F"
+      
+      # Kadena EVM RPC URL
+      NEXT_PUBLIC_KADENA_EVM_RPC: "https://evm-testnet.chainweb.com/chainweb/0.0/evm-testnet/chain/20/evm/rpc"
+    ports:
+      - "3001:3000"
+    depends_on:
+      - orchestrator
+    restart: unless-stopped
+    networks:
+      - orchestrator-network
+
 volumes:
   redis_data:
     driver: local

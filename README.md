@@ -1,281 +1,313 @@
-# Orchestrator Service
+# Stablecoin Orchestrator Service
 
-A production-grade TypeScript/Node.js service that orchestrates mint and redeem operations for a stablecoin launchpad on Kadena EVM chains (5920-5924). The service sits between Kuro (compliance service) and the EVM chains, handling EIP-712 typed data signing with AWS KMS.
+A production-grade orchestrator service for launching stablecoins on Kadena EVM with compliance and security built-in. This service acts as a bridge between compliance systems (Kuro) and the blockchain, handling KYC approvals, contract deployment, and minting operations.
 
-## Architecture
+## 🏗️ Architecture
 
 ```
-┌─────────────┐    ┌─────────────────┐    ┌──────────────────┐
-│    Kuro     │───▶│  Orchestrator   │───▶│ Kadena EVM Chains│
-│ (Compliance)│    │    Service      │    │    (5920-5924)   │
-└─────────────┘    └─────────────────┘    └──────────────────┘
-                           │
-                           ▼
-                   ┌─────────────────┐
-                   │   AWS KMS       │
-                   │ (EIP-712 Signing)│
-                   └─────────────────┘
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   Orchestrator   │    │   Kadena EVM    │
+│   (Next.js)     │◄──►│   Service        │◄──►│   Chain 5920    │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                       │                       │
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   MetaMask      │    │   Kuro Mock      │    │   KYC Registry  │
+│   Wallet        │    │   Service        │    │   Contract      │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                                │
+                                ▼
+                       ┌──────────────────┐
+                       │   PostgreSQL     │
+                       │   Database       │
+                       └──────────────────┘
 ```
 
-## Features
+## 🚀 Features
 
-- **Event-Driven Architecture**: Listens to Kuro WebSocket events and EVM contract events
-- **AWS KMS Integration**: Secure EIP-712 typed data signing with AWS KMS
-- **Multi-Chain Support**: Supports Kadena EVM chains 5920-5924
-- **Queue-Based Processing**: Uses BullMQ with Redis for reliable job processing
-- **Database Persistence**: PostgreSQL with Prisma ORM for request tracking
+### Backend (Orchestrator Service)
+- **Event Listening**: Monitors KYC approvals and mint requests
+- **Contract Deployment**: Automatically deploys stablecoin contracts
+- **HSM Integration**: AWS KMS for secure EIP-712 signing
+- **Queue System**: BullMQ with Redis for reliable processing
+- **Database**: PostgreSQL with Prisma ORM
 - **Health Monitoring**: Comprehensive health checks and metrics
-- **Production Ready**: Docker containerization, graceful shutdown, error handling
+- **Graceful Shutdown**: Production-ready error handling
 
-## Quick Start
+### Frontend (Stablecoin Launcher)
+- **Wallet Integration**: MetaMask and other Web3 wallets
+- **KYC Submission**: Institution details and document upload
+- **Real-time Status**: Transaction tracking and confirmation
+- **Responsive Design**: Mobile-friendly interface
+- **Smart Contract Integration**: Direct blockchain interaction
+
+## 📁 Project Structure
+
+```
+orchestrator-service/
+├── src/                          # Backend source code
+│   ├── contracts/                # Smart contract ABIs
+│   ├── db/                       # Database service
+│   ├── listeners/                # Event listeners
+│   ├── services/                 # Business logic
+│   ├── signers/                  # HSM integration
+│   └── types/                    # TypeScript types
+├── frontend/                     # Next.js frontend
+│   ├── src/
+│   │   ├── app/                  # Next.js app directory
+│   │   └── hooks/                # React hooks
+│   └── Dockerfile
+├── tests/                        # Test files
+├── scripts/                      # Utility scripts
+├── docker-compose.yml            # Multi-service setup
+└── README.md
+```
+
+## 🛠️ Setup & Installation
 
 ### Prerequisites
-
 - Node.js 18+
-- Docker and Docker Compose
-- AWS KMS key with ECC_SECG_P256K1 algorithm
-- PostgreSQL database
-- Redis instance
+- Docker & Docker Compose
+- PostgreSQL (or use provided Prisma Accelerate)
+- AWS KMS key (for production)
 
-### 1. Clone and Setup
+### Quick Start
 
+1. **Clone the repository**
 ```bash
 git clone <repository-url>
 cd orchestrator-service
-npm install
 ```
 
-### 2. Environment Configuration
-
-Copy the example environment file and configure:
-
+2. **Set up environment variables**
 ```bash
+# Copy environment template
 cp env.example .env
+
+# Edit .env with your configuration
+nano .env
 ```
 
-Update the following required variables:
-
-```env
-# AWS KMS Configuration
-AWS_REGION=us-east-1
-KMS_KEY_ID=arn:aws:kms:us-east-1:123456789012:key/your-key-id
-
-# Database
-DATABASE_URL=postgresql://postgres:password@localhost:5432/orchestrator_db
-
-# Chain RPC URLs (update with actual endpoints)
-KADENA_EVM_CHAIN_5920_RPC=https://api-evm-5920.kadena.network
-# ... other chains
-
-# Contract Addresses (update with deployed addresses)
-STABLECOIN_CONTRACT_ADDRESS_5920=0x1234567890123456789012345678901234567890
-# ... other chains
-
-# Relayer Private Keys (for gas payments)
-RELAYER_PRIVATE_KEY_5920=0x1234567890123456789012345678901234567890123456789012345678901234
-# ... other chains
-```
-
-### 3. Database Setup
-
+3. **Start all services with Docker Compose**
 ```bash
+docker-compose up -d
+```
+
+4. **Access the services**
+- Frontend: http://localhost:3001
+- Orchestrator API: http://localhost:3000
+- Kuro Mock: http://localhost:8080
+
+### Manual Setup
+
+#### Backend Setup
+```bash
+# Install dependencies
+npm install
+
 # Generate Prisma client
-npx prisma generate
+npm run prisma:generate
 
-# Run database migrations
-npx prisma db push
-```
+# Run migrations
+npm run prisma:migrate
 
-### 4. Development
-
-```bash
-# Start development environment
-docker-compose -f docker-compose.dev.yml up -d postgres redis
-
-# Start the service
+# Start development server
 npm run dev
 ```
 
-### 5. Production Deployment
+#### Frontend Setup
+```bash
+cd frontend
 
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env.local
+
+# Start development server
+npm run dev
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+
+#### Backend (.env)
+```env
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/orchestrator_db"
+
+# AWS KMS
+AWS_REGION="us-east-1"
+KMS_KEY_ID="arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012"
+
+# Chain Configuration
+KADENA_EVM_CHAIN_RPC="https://evm-testnet.chainweb.com/chainweb/0.0/evm-testnet/chain/20/evm/rpc"
+
+# Contract Addresses
+STABLECOIN_CONTRACT_ADDRESS="0x..."
+KYC_REGISTRY_CONTRACT_ADDRESS="0x..."
+
+# Relayer Private Key
+RELAYER_PRIVATE_KEY="0x..."
+
+# Redis
+REDIS_URL="redis://localhost:6379"
+
+# Server
+PORT=3000
+NODE_ENV="development"
+LOG_LEVEL="info"
+```
+
+#### Frontend (.env.local)
+```env
+# WalletConnect Project ID
+NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID="your-project-id"
+
+# Contract Addresses
+NEXT_PUBLIC_KYC_REGISTRY_ADDRESS="0x..."
+
+# RPC URL
+NEXT_PUBLIC_KADENA_EVM_RPC="https://evm-testnet.chainweb.com/chainweb/0.0/evm-testnet/chain/20/evm/rpc"
+```
+
+## 🔄 Workflows
+
+### 1. KYC Approval Flow
+```
+Institution submits KYC → Frontend calls setKYC() → KYCApproved event → 
+Orchestrator deploys stablecoin contract → Contract ready for minting
+```
+
+### 2. Mint Request Flow
+```
+Kuro emits mintOk → Orchestrator requests HSM signature → 
+mintWithApproval() transaction → Tokens minted to user
+```
+
+### 3. Redeem Request Flow
+```
+User calls requestRedeem() → Tokens burned immediately → 
+RedeemRequested event → Orchestrator processes event
+```
+
+## 🧪 Testing
+
+### Run Tests
+```bash
+# Backend tests
+npm test
+
+# Frontend tests
+cd frontend && npm test
+
+# Integration tests
+npm run test:integration
+```
+
+### Test Coverage
+```bash
+npm run test:coverage
+```
+
+## 📊 Monitoring
+
+### Health Endpoints
+- **Liveness**: `GET /health/live`
+- **Readiness**: `GET /health/ready`
+- **Full Status**: `GET /health`
+
+### Metrics
+- Request processing times
+- Database connection status
+- KMS health status
+- Chain connectivity
+- Queue processing status
+
+## 🚀 Deployment
+
+### Docker Deployment
 ```bash
 # Build and start all services
 docker-compose up -d
 
-# Check logs
-docker-compose logs -f orchestrator
+# View logs
+docker-compose logs -f
+
+# Scale services
+docker-compose up -d --scale orchestrator=3
 ```
 
-## API Endpoints
+### Production Considerations
+- Use environment-specific configuration
+- Set up proper secrets management
+- Configure load balancing
+- Set up monitoring and alerting
+- Use production-grade databases
+- Configure backup strategies
 
-### Health Endpoints
+## 🔒 Security
 
-- `GET /health` - Comprehensive health check
-- `GET /health/ready` - Readiness probe
-- `GET /health/live` - Liveness probe
+### HSM Integration
+- AWS KMS for EIP-712 signing
+- Secure key management
+- No private keys in code
 
-### Status Endpoints
+### Database Security
+- Encrypted connections
+- Access controls
+- Audit logging
 
-- `GET /status/:requestId` - Get request status
-- `GET /status` - List recent requests (with query parameters)
+### Network Security
+- CORS configuration
+- Rate limiting
+- Input validation
 
-### Metrics Endpoints
+## 📚 API Documentation
 
-- `GET /metrics` - Basic service metrics
-- `GET /metrics/queues` - Queue statistics
+### Endpoints
 
-## Core Components
-
-### AWS KMS Signer (`src/signers/AwsKmsSigner.ts`)
-
-Handles EIP-712 typed data signing with AWS KMS:
-
-```typescript
-const signer = new AwsKmsSigner();
-
-// Sign mint approval
-const signature = await signer.signMintApproval({
-  requestId: 'req-123',
-  to: '0x742d35Cc6634C0532925a3b8D8C9c9B6C6c8C8C8',
-  amount: BigInt('1000000000000000000'),
-  nonce: BigInt('1'),
-  deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
-}, 5920);
+#### Health Check
+```http
+GET /health
 ```
 
-### Event Listeners
-
-- **KuroListener**: Listens to Kuro WebSocket events for mint requests
-- **EVMListener**: Listens to EVM contract events for redeem requests
-
-### Orchestration Services
-
-- **MintService**: Processes mint requests from Kuro
-- **RedeemService**: Processes redeem requests from EVM
-- **QueueService**: Manages job queues with BullMQ
-
-## Data Flow
-
-### Mint Flow
-
-1. Kuro emits `mintOk` event via WebSocket
-2. Orchestrator receives event and creates database record
-3. Request is queued for processing
-4. AWS KMS signs EIP-712 `MintApproval` typed data
-5. Relayer submits `mintWithApproval()` transaction
-6. Database record updated with transaction hash
-
-### Redeem Flow
-
-1. User calls `requestRedeem()` on EVM contract
-2. Orchestrator detects `RedeemRequested` event
-3. Request is queued for processing
-4. AWS KMS signs EIP-712 `RedeemFinalize` typed data
-5. Relayer submits `finalizeRedeem()` transaction
-6. Database record updated with transaction hash
-
-## Testing
-
-```bash
-# Run unit tests
-npm test
-
-# Run tests with coverage
-npm run test -- --coverage
-
-# Run integration tests
-npm run test -- tests/integration.test.ts
+#### Request Status
+```http
+GET /status/:requestId
 ```
 
-## Monitoring
-
-The service provides comprehensive monitoring through:
-
-- **Health Checks**: `/health` endpoint for Kubernetes/container orchestration
-- **Metrics**: `/metrics` endpoint for Prometheus scraping
-- **Logging**: Structured JSON logs with Pino
-- **Database Tracking**: All requests stored with status tracking
-
-## Security Considerations
-
-- **AWS KMS**: Private keys never leave AWS KMS
-- **Relayer Keys**: Hot wallets only used for gas payments
-- **Rate Limiting**: Express rate limiting on all endpoints
-- **Input Validation**: Joi validation for all inputs
-- **Error Handling**: Secure error messages without sensitive data
-
-## Production Deployment
-
-### Docker
-
-```bash
-# Build production image
-docker build -t orchestrator-service .
-
-# Run with docker-compose
-docker-compose up -d
+#### WebSocket Events
+```javascript
+// Connect to orchestrator events
+const ws = new WebSocket('ws://localhost:3000/events');
 ```
 
-### Kubernetes
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: orchestrator-service
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: orchestrator-service
-  template:
-    metadata:
-      labels:
-        app: orchestrator-service
-    spec:
-      containers:
-      - name: orchestrator
-        image: orchestrator-service:latest
-        ports:
-        - containerPort: 3000
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: orchestrator-secrets
-              key: database-url
-        - name: KMS_KEY_ID
-          valueFrom:
-            secretKeyRef:
-              name: orchestrator-secrets
-              key: kms-key-id
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 3000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 3000
-          initialDelaySeconds: 5
-          periodSeconds: 5
-```
-
-## Configuration
-
-All configuration is done through environment variables. See `env.example` for the complete list of required and optional variables.
-
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
 4. Add tests
-5. Run the test suite
-6. Submit a pull request
+5. Submit a pull request
 
-## License
+## 📄 License
 
-MIT License - see LICENSE file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+For issues and questions:
+- Check the documentation
+- Review existing issues
+- Create a new issue with detailed information
+
+## 🔗 Related Projects
+
+- [Kadena EVM Documentation](https://docs.kadena.io/)
+- [Ethers.js Documentation](https://docs.ethers.org/)
+- [Prisma Documentation](https://www.prisma.io/docs/)
+- [Next.js Documentation](https://nextjs.org/docs/)
