@@ -5,6 +5,7 @@
   "main": "kuro-mock.js",
   "dependencies": {
     "express": "^4.18.2",
-    "ws": "^8.14.2"
+    "ws": "^8.14.2",
+    "ethers": "^6.9.0"
   }
 }

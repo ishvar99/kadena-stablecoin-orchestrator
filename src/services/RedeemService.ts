@@ -56,97 +56,48 @@ export class RedeemService {
   }
 
   /**
-   * Execute the actual redeem finalization transaction
+   * Process a redeem request (the actual redeem happens when user calls requestRedeem)
+   * This service just logs and tracks the event
    */
   async executeRedeem(event: RedeemRequestedEvent): Promise<TransactionResult> {
     const { requestId, from, amount } = event;
     
-    logger.info('Executing redeem transaction', { requestId, from, amount: amount.toString(), chainId: config.chainId });
-
     try {
       // Update status to processing
       await dbService.updateRequestStatus(requestId, 'PROCESSING');
 
-      // Get contract and wallet
-      const contract = contractManager.getContract('stablecoin') as any;
-      const wallet = contractManager.getWallet();
+      logger.info('Processing redeem request event', { 
+        requestId, 
+        from, 
+        amount: amount.toString(), 
+        chainId: config.chainId
+      });
 
-      // Get next nonce for the relayer address
-      const nonce = await dbService.getNextNonce(wallet.address, config.chainId);
+      // The actual redeem (burn) has already happened when the user called requestRedeem
+      // This service just processes the event and updates the database
       
-      // Set deadline (24 hours from now)
-      const deadline = BigInt(Math.floor(Date.now() / 1000) + 24 * 60 * 60);
-      
-      // Prepare redeem finalize data
-      const redeemData: RedeemFinalize = {
-        requestId,
-        from,
-        amount,
-        nonce,
-        deadline,
+      // Update database with success
+      await dbService.updateRequestStatus(requestId, 'COMPLETED');
+
+      logger.info('Redeem request processed successfully', { 
+        requestId, 
+        from, 
+        amount: amount.toString()
+      });
+
+      return {
+        success: true,
+        message: 'Redeem request processed successfully'
       };
-
-      // Sign the redeem finalize
-      const signature = await this.signer.signRedeemFinalize(redeemData, config.chainId);
-      
-      logger.debug('Redeem finalize signed', { requestId, signature });
-
-      // Connect wallet to contract
-      const contractWithSigner = contract.connect(wallet);
-
-      // Estimate gas
-      const gasEstimate = await contractWithSigner.finalizeRedeem.estimateGas(
-        requestId,
-        from,
-        amount,
-        nonce,
-        deadline,
-        signature
-      );
-
-      // Execute redeem transaction
-      const tx = await contractWithSigner.finalizeRedeem(
-        requestId,
-        from,
-        amount,
-        nonce,
-        deadline,
-        signature,
-        {
-          gasLimit: gasEstimate * 120n / 100n, // Add 20% buffer
-        }
-      );
-
-      logger.info('Redeem transaction submitted', { requestId, txHash: tx.hash });
-
-      // Wait for confirmation
-      const receipt = await tx.wait();
-      
-      if (receipt.status === 1) {
-        logger.info('Redeem transaction confirmed', { 
-          requestId, 
-          txHash: tx.hash,
-          blockNumber: receipt.blockNumber,
-          gasUsed: receipt.gasUsed.toString()
-        });
-
-        // Update database with success
-        await dbService.updateRequestStatus(requestId, 'COMPLETED', tx.hash);
-
-        return {
-          hash: tx.hash,
-          blockNumber: receipt.blockNumber,
-          gasUsed: receipt.gasUsed.toString(),
-        };
-      } else {
-        throw new Error('Redeem transaction failed');
-      }
     } catch (error) {
-      logger.error('Error executing redeem transaction', { requestId, error: error instanceof Error ? error.message : String(error) });
+      logger.error('Error processing redeem request', { requestId, error: error instanceof Error ? error.message : String(error) });
       
       // Update database with error
       await dbService.updateRequestStatus(requestId, 'FAILED', undefined, error instanceof Error ? error.message : String(error));
-      throw error;
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error)
+      };
     }
   }
 

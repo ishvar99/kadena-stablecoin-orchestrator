@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { Request, Response } from 'express';
+import { ethers } from 'ethers';
 import { dbService } from '../db';
 import { contractManager } from '../contracts';
 import { AwsKmsSigner } from '../signers/AwsKmsSigner';
@@ -45,6 +46,8 @@ router.get('/', async (req: Request, res: Response) => {
       },
       extra: {
         kmsRecoveredAddress: recoveredAddress, // 👈 log which signer address KMS produced
+        relayerAddress: new ethers.Wallet(config.relayerPrivateKey).address,
+        relayerBalance: ethers.formatEther(await contractManager.getProvider().getBalance(new ethers.Wallet(config.relayerPrivateKey).address)),
       },
       uptime: process.uptime(),
     };

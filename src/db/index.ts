@@ -150,6 +150,111 @@ export class DatabaseService {
   }
 
   /**
+   * Save deployed stablecoin record
+   */
+  async saveDeployedStablecoin(stablecoin: any): Promise<void> {
+    try {
+      await prisma.deployedStablecoin.create({
+        data: {
+          id: stablecoin.id,
+          tokenName: stablecoin.tokenName,
+          tokenSymbol: stablecoin.tokenSymbol,
+          contractAddress: stablecoin.contractAddress,
+          deployerAddress: stablecoin.deployerAddress,
+          deploymentTxHash: stablecoin.deploymentTxHash,
+          blockNumber: stablecoin.blockNumber,
+          chainId: stablecoin.chainId,
+          isActive: stablecoin.isActive,
+        }
+      });
+      logger.info('Deployed stablecoin saved to database', { 
+        contractAddress: stablecoin.contractAddress,
+        tokenName: stablecoin.tokenName,
+        tokenSymbol: stablecoin.tokenSymbol
+      });
+    } catch (error) {
+      logger.error('Failed to save deployed stablecoin', { 
+        error: error instanceof Error ? error.message : String(error),
+        contractAddress: stablecoin.contractAddress
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Get deployed stablecoin by user and token
+   */
+  async getDeployedStablecoinByUserAndToken(
+    userAddress: string, 
+    tokenName: string, 
+    tokenSymbol: string
+  ): Promise<any | null> {
+    try {
+      // Note: This is a simplified implementation
+      // In a real scenario, you might need to track the user who requested the deployment
+      const stablecoin = await prisma.deployedStablecoin.findFirst({
+        where: {
+          tokenName,
+          tokenSymbol,
+          isActive: true
+        }
+      });
+      return stablecoin;
+    } catch (error) {
+      logger.error('Failed to get deployed stablecoin', { 
+        error: error instanceof Error ? error.message : String(error),
+        userAddress,
+        tokenName,
+        tokenSymbol
+      });
+      return null;
+    }
+  }
+
+  /**
+   * Get all active deployed stablecoins
+   */
+  async getAllActiveStablecoins(): Promise<any[]> {
+    try {
+      const stablecoins = await prisma.deployedStablecoin.findMany({
+        where: {
+          isActive: true
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+      return stablecoins;
+    } catch (error) {
+      logger.error('Failed to get active stablecoins', { 
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return [];
+    }
+  }
+
+  /**
+   * Get recent requests
+   */
+  async getRecentRequests(limit: number = 50, offset: number = 0): Promise<any[]> {
+    try {
+      const requests = await prisma.requestRecord.findMany({
+        take: limit,
+        skip: offset,
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+      return requests;
+    } catch (error) {
+      logger.error('Failed to get recent requests', { 
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return [];
+    }
+  }
+
+  /**
    * Database health check
    */
   async healthCheck(): Promise<boolean> {

@@ -1,17 +1,19 @@
 export interface MintApproval {
-  requestId: string;
   to: string;
   amount: bigint;
   nonce: bigint;
-  deadline: bigint;
+  expiry: bigint;
+  chainId: bigint;
+  requestId: string;
 }
 
 export interface RedeemFinalize {
-  requestId: string;
   from: string;
   amount: bigint;
   nonce: bigint;
-  deadline: bigint;
+  expiry: bigint;
+  chainId: bigint;
+  requestId: string;
 }
 
 export interface KuroMintEvent {
@@ -25,6 +27,38 @@ export interface KuroMintEvent {
 export interface RedeemRequestedEvent {
   requestId: string;
   from: string;
+  amount: bigint;
+  blockNumber: number;
+  transactionHash: string;
+  chainId: number;
+}
+
+export interface KYCApprovedEvent {
+  tokenName: string;
+  tokenSymbol: string;
+  userAddress: string;
+  timestamp: number;
+  blockNumber: number;
+  transactionHash: string;
+  chainId: number;
+}
+
+export interface DeployedStablecoin {
+  id: string;
+  tokenName: string;
+  tokenSymbol: string;
+  contractAddress: string;
+  deployerAddress: string;
+  deploymentTxHash: string;
+  blockNumber: number;
+  chainId: number;
+  createdAt: Date;
+  isActive: boolean;
+}
+
+export interface StablecoinMintEvent {
+  contractAddress: string;
+  to: string;
   amount: bigint;
   blockNumber: number;
   transactionHash: string;
@@ -57,6 +91,8 @@ export interface HealthStatus {
   };
   extra?: {
     kmsRecoveredAddress?: string;
+    relayerAddress?: string;
+    relayerBalance?: string;
   };
   uptime: number;
 }
@@ -67,7 +103,12 @@ export interface SignerResult {
 }
 
 export interface TransactionResult {
-  hash: string;
+  success: boolean;
+  txHash?: string;
+  hash?: string; // For backward compatibility
   blockNumber?: number;
   gasUsed?: string;
+  contractAddress?: string;
+  error?: string;
+  message?: string;
 }

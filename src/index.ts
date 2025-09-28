@@ -9,8 +9,10 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import healthRoutes from './routes/health';
 import statusRoutes from './routes/status';
 import metricsRoutes from './routes/metrics';
+import relayerRoutes from './routes/relayer';
 import { KuroListener } from './listeners/KuroListener';
 import { EVMListener } from './listeners/EVMListener';
+import { RelayerListener } from './listeners/RelayerListener';
 import { MintService } from './services/MintService';
 import { RedeemService } from './services/RedeemService';
 import { QueueService } from './services/QueueService';
@@ -24,6 +26,7 @@ class OrchestratorApp {
   private queueService!: QueueService;
   private kuroListener!: KuroListener;
   private evmListener!: EVMListener;
+  private relayerListener!: RelayerListener;
 
   constructor() {
     this.app = express();
@@ -48,6 +51,7 @@ class OrchestratorApp {
     // Initialize listeners
     this.kuroListener = new KuroListener(this.mintService);
     this.evmListener = new EVMListener(this.redeemService);
+    this.relayerListener = new RelayerListener();
   }
 
   private setupMiddleware(): void {
@@ -84,6 +88,9 @@ class OrchestratorApp {
     // Metrics endpoints
     this.app.use('/metrics', metricsRoutes);
     
+    // Relayer endpoints
+    this.app.use('/relayer', relayerRoutes);
+    
     // Root endpoint
     this.app.get('/', (req, res) => {
       res.json({
@@ -112,6 +119,7 @@ class OrchestratorApp {
       logger.info('Starting event listeners...');
       await this.kuroListener.start();
       await this.evmListener.start();
+      await this.relayerListener.start();
       
       // Start server
       this.server = this.app.listen(config.port, () => {
@@ -142,6 +150,7 @@ class OrchestratorApp {
         // Stop listeners
         this.kuroListener.stop();
         await this.evmListener.stop();
+        await this.relayerListener.stop();
         
         // Stop queue service
         await this.queueService.shutdown();

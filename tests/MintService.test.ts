@@ -132,7 +132,7 @@ describe('MintService', () => {
       };
 
       (contractManager.getContract as jest.Mock).mockReturnValue(mockContract);
-      (contractManager.getWallet as jest.Mock).mockReturnValue(mockWallet);
+      // Remove getWallet call as it's not used in the updated service
 
       // Mock transaction
       const mockTx = {
@@ -144,7 +144,10 @@ describe('MintService', () => {
         }),
       };
 
-      mockContract.mintWithApproval = jest.fn().mockResolvedValue(mockTx);
+      mockContract.mintWithApproval = {
+        estimateGas: jest.fn().mockResolvedValue(BigInt(100000)),
+        ...jest.fn().mockResolvedValue(mockTx)
+      };
 
       const result = await mintService.executeMint(request);
 
@@ -179,9 +182,12 @@ describe('MintService', () => {
       };
 
       (contractManager.getContract as jest.Mock).mockReturnValue(mockContract);
-      (contractManager.getWallet as jest.Mock).mockReturnValue({ address: '0xtest' });
+      // Remove getWallet call as it's not used in the updated service
 
-      mockContract.mintWithApproval = jest.fn().mockRejectedValue(new Error('Transaction failed'));
+      mockContract.mintWithApproval = {
+        estimateGas: jest.fn().mockResolvedValue(BigInt(100000)),
+        ...jest.fn().mockRejectedValue(new Error('Transaction failed'))
+      };
 
       await expect(mintService.executeMint(request)).rejects.toThrow('Transaction failed');
 
@@ -196,7 +202,7 @@ describe('MintService', () => {
 
   describe('healthCheck', () => {
     it('should return true when signer is healthy', async () => {
-      mockSigner.healthCheck.mockResolvedValue(true);
+      mockSigner.healthCheck.mockResolvedValue({ healthy: true });
 
       const result = await mintService.healthCheck();
 
@@ -204,7 +210,7 @@ describe('MintService', () => {
     });
 
     it('should return false when signer is unhealthy', async () => {
-      mockSigner.healthCheck.mockResolvedValue(false);
+      mockSigner.healthCheck.mockResolvedValue({ healthy: false });
 
       const result = await mintService.healthCheck();
 

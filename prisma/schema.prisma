@@ -48,6 +48,22 @@ model HealthCheck {
   @@map("health_checks")
 }
 
+model DeployedStablecoin {
+  id                String   @id @default(cuid())
+  tokenName         String
+  tokenSymbol       String
+  contractAddress   String   @unique
+  deployerAddress   String
+  deploymentTxHash  String
+  blockNumber       Int
+  chainId           Int
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("deployed_stablecoins")
+}
+
 enum RequestType {
   MINT
   REDEEM

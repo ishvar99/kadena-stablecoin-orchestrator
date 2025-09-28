@@ -9,18 +9,20 @@ export const EIP712_DOMAIN: TypedDataDomain = {
 
 export const EIP712_TYPES = {
   MintApproval: [
-    { name: "requestId", type: "string" },
     { name: "to", type: "address" },
     { name: "amount", type: "uint256" },
     { name: "nonce", type: "uint256" },
-    { name: "deadline", type: "uint256" },
+    { name: "expiry", type: "uint64" },
+    { name: "chainId", type: "uint256" },
+    { name: "requestId", type: "bytes32" },
   ],
   RedeemFinalize: [
-    { name: "requestId", type: "string" },
     { name: "from", type: "address" },
     { name: "amount", type: "uint256" },
     { name: "nonce", type: "uint256" },
-    { name: "deadline", type: "uint256" },
+    { name: "expiry", type: "uint64" },
+    { name: "chainId", type: "uint256" },
+    { name: "requestId", type: "bytes32" },
   ],
 };
 

@@ -35,8 +35,8 @@ services:
       KADENA_EVM_CHAIN_RPC: "https://evm-testnet.chainweb.com/chainweb/0.0/evm-testnet/chain/20/evm/rpc"
       
       # Contract Addresses
-      STABLECOIN_CONTRACT_ADDRESS: "0x8AB135E30daf6fB03001026e4E485e54a354157B"
-      KYC_REGISTRY_CONTRACT_ADDRESS: "0x2814b08ddDaF12e6042a54BCB5f33cb962EdE28F"
+      STABLECOIN_CONTRACT_ADDRESS: "0xeeDBd5C04e1b5116061cB11D9D1fEd9979CA8Cae"
+      KYC_REGISTRY_CONTRACT_ADDRESS: "0x94015e24102d91878648Ce91AC4EEc153a8e87d6"
       
       # Relayer Private Key (update with actual key - use secrets in production)
       RELAYER_PRIVATE_KEY: "0x0064DCD414387c19dFB22Bf8DC111358E5b3616e"
@@ -74,6 +74,15 @@ services:
       context: .
       dockerfile: Dockerfile.kuro-mock
     container_name: kuro-mock
+    environment:
+      # Chain Configuration
+      KADENA_EVM_CHAIN_RPC: "https://evm-testnet.chainweb.com/chainweb/0.0/evm-testnet/chain/20/evm/rpc"
+      
+      # Contract Addresses
+      KYC_REGISTRY_CONTRACT_ADDRESS: "0x2814b08ddDaF12e6042a54BCB5f33cb962EdE28F"
+      
+      # Relayer Private Key (same as orchestrator)
+      RELAYER_PRIVATE_KEY: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
     ports:
       - "8080:8080"
     networks:

@@ -29,11 +29,12 @@ describe('AwsKmsSigner', () => {
   describe('signMintApproval', () => {
     it('should sign a mint approval successfully', async () => {
       const mintData: MintApproval = {
-        requestId: 'test-request-123',
         to: '0x742d35Cc6634C0532925a3b8D8C9c9B6C6c8C8C8',
         amount: BigInt('1000000000000000000'), // 1 ETH
         nonce: BigInt('1'),
-        deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
+        expiry: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1 hour from now
+        chainId: BigInt(5920),
+        requestId: 'test-request-123',
       };
 
       // Mock ethers functions
@@ -61,11 +62,12 @@ describe('AwsKmsSigner', () => {
 
     it('should handle KMS errors gracefully', async () => {
       const mintData: MintApproval = {
-        requestId: 'test-request-123',
         to: '0x742d35Cc6634C0532925a3b8D8C9c9B6C6c8C8C8',
         amount: BigInt('1000000000000000000'),
         nonce: BigInt('1'),
-        deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
+        expiry: BigInt(Math.floor(Date.now() / 1000) + 3600),
+        chainId: BigInt(5920),
+        requestId: 'test-request-123',
       };
 
       mockEthers.TypedDataEncoder.hash.mockReturnValue('0x1234567890abcdef');
@@ -81,11 +83,12 @@ describe('AwsKmsSigner', () => {
   describe('signRedeemFinalize', () => {
     it('should sign a redeem finalize successfully', async () => {
       const redeemData: RedeemFinalize = {
-        requestId: 'test-redeem-123',
         from: '0x742d35Cc6634C0532925a3b8D8C9c9B6C6c8C8C8',
         amount: BigInt('1000000000000000000'),
         nonce: BigInt('2'),
-        deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
+        expiry: BigInt(Math.floor(Date.now() / 1000) + 3600),
+        chainId: BigInt(5920),
+        requestId: 'test-redeem-123',
       };
 
       mockEthers.TypedDataEncoder.hash.mockReturnValue('0x1234567890abcdef');

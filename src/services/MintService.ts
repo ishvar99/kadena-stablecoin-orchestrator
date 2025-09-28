@@ -69,15 +69,24 @@ export class MintService {
   async executeMint(request: MintRequest): Promise<TransactionResult> {
     const { requestId, user, amount, fiatRef } = request;
     
-    logger.info('Executing mint transaction', { requestId, user, amount, chainId: config.chainId });
-
     try {
       // Update status to processing
       await dbService.updateRequestStatus(requestId, 'PROCESSING');
 
-      // Get contract and wallet
+      // Get contract and create relayer wallet
       const contract = contractManager.getContract('stablecoin') as any;
-      const wallet = contractManager.getWallet();
+      const wallet = new ethers.Wallet(config.relayerPrivateKey, contractManager.getProvider());
+
+      // Check relayer balance before minting
+      const relayerBalance = await contractManager.getProvider().getBalance(wallet.address);
+      logger.info('Executing mint transaction', { 
+        requestId, 
+        user, 
+        amount, 
+        chainId: config.chainId,
+        relayerAddress: wallet.address,
+        relayerBalance: ethers.formatEther(relayerBalance)
+      });
 
       // Get next nonce for the relayer address
       const nonce = await dbService.getNextNonce(wallet.address, config.chainId);
@@ -87,11 +96,12 @@ export class MintService {
       
       // Prepare mint approval data
       const mintData: MintApproval = {
-        requestId,
         to: user,
         amount: BigInt(amount),
         nonce,
-        deadline,
+        expiry: deadline,
+        chainId: BigInt(config.chainId),
+        requestId,
       };
 
       // Sign the mint approval
@@ -104,21 +114,23 @@ export class MintService {
 
       // Estimate gas
       const gasEstimate = await contractWithSigner.mintWithApproval.estimateGas(
-        requestId,
         user,
         amount,
         nonce,
-        deadline,
+        Number(deadline),
+        config.chainId,
+        requestId,
         signature
       );
 
       // Execute mint transaction
       const tx = await contractWithSigner.mintWithApproval(
-        requestId,
         user,
         amount,
         nonce,
-        deadline,
+        Number(deadline),
+        config.chainId,
+        requestId,
         signature,
         {
           gasLimit: gasEstimate * 120n / 100n, // Add 20% buffer
@@ -142,19 +154,30 @@ export class MintService {
         await dbService.updateRequestStatus(requestId, 'COMPLETED', tx.hash);
 
         return {
-          hash: tx.hash,
+          success: true,
+          txHash: tx.hash,
+          hash: tx.hash, // For backward compatibility
           blockNumber: receipt.blockNumber,
           gasUsed: receipt.gasUsed.toString(),
         };
       } else {
-        throw new Error('Mint transaction failed');
+        logger.error('Mint transaction failed on-chain', { requestId, txHash: tx.hash });
+        await dbService.updateRequestStatus(requestId, 'FAILED', tx.hash, 'Transaction failed on-chain');
+        return {
+          success: false,
+          txHash: tx.hash,
+          error: 'Transaction failed on-chain'
+        };
       }
     } catch (error) {
       logger.error('Error executing mint transaction', { requestId, error: error instanceof Error ? error.message : String(error) });
       
       // Update database with error
       await dbService.updateRequestStatus(requestId, 'FAILED', undefined, error instanceof Error ? error.message : String(error));
-      throw error;
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error)
+      };
     }
   }
 

@@ -10,21 +10,11 @@ export interface ContractInstances {
 }
 
 export class ContractManager {
-  private provider!: ethers.JsonRpcProvider;
-  private contracts!: ContractInstances;
-  private wallet!: ethers.Wallet;
+  private provider: ethers.JsonRpcProvider;
+  private contracts: ContractInstances;
 
   constructor() {
-    this.initializeProvider();
-    this.initializeContracts();
-    this.initializeWallet();
-  }
-
-  private initializeProvider() {
     this.provider = new ethers.JsonRpcProvider(config.rpcUrl);
-  }
-
-  private initializeContracts() {
     this.contracts = {
       stablecoin: new ethers.Contract(
         config.stablecoinAddress,
@@ -39,10 +29,6 @@ export class ContractManager {
     };
   }
 
-  private initializeWallet() {
-    this.wallet = new ethers.Wallet(config.relayerPrivateKey, this.provider);
-  }
-
   getContract(contractName: keyof ContractInstances): ethers.Contract {
     const contract = this.contracts[contractName];
     if (!contract) {
@@ -55,14 +41,10 @@ export class ContractManager {
     return this.provider;
   }
 
-  getWallet(): ethers.Wallet {
-    return this.wallet;
-  }
-
   async isKYCVerified(userAddress: string): Promise<boolean> {
     try {
       const kycRegistry = this.getContract('kycRegistry') as any;
-      return await kycRegistry.isKYCVerified(userAddress);
+      return await kycRegistry.isKYC(userAddress);
     } catch (error) {
       console.error('Error checking KYC status:', error);
       return false;
