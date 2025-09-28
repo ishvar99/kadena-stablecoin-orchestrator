@@ -68,13 +68,13 @@ export function useKYCContract() {
     hash,
   });
 
-  const submitKYC = async (userAddress: any, name: string, symbol: string) => {
+  const submitKYC = async (userAddress: string, name: string, symbol: string) => {
     try {
       await writeContract({
         address: KYC_REGISTRY_ADDRESS as `0x${string}`,
         abi: KYC_REGISTRY_ABI,
         functionName: 'setKYC',
-        args: [userAddress, name, symbol],
+        args: [userAddress as `0x${string}`, name, symbol],
       });
     } catch (err) {
       console.error('Error submitting KYC:', err);

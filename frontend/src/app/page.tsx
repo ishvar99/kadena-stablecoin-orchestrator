@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { injected } from 'wagmi/connectors';
 import { Upload, Wallet, Building2, Coins, FileText, CheckCircle, ExternalLink } from 'lucide-react';
 import { useKYCContract } from '@/hooks/useKYCContract';
+import Image from 'next/image';
 
 export default function Home() {
   const { address, isConnected } = useAccount();
@@ -24,6 +25,28 @@ export default function Home() {
   const [deployedContract, setDeployedContract] = useState<{name: string, symbol: string, address: string} | null>(null);
   const [waitingForConfirmation, setWaitingForConfirmation] = useState(false);
 
+  const simulateProgress = useCallback(() => {
+    // Simulate KYC approval after 4 seconds
+    setTimeout(() => {
+      setProgressStatus('kyc-approved');
+      
+      // Simulate deployment after another 4 seconds
+      setTimeout(() => {
+        setProgressStatus('deploying');
+        
+        // Simulate deployment completion after another 4 seconds
+        setTimeout(() => {
+          setProgressStatus('deployed');
+          setDeployedContract({
+            name: formData.stablecoinName,
+            symbol: formData.stablecoinSymbol,
+            address: '0x' + Math.random().toString(16).substr(2, 40) // Mock contract address
+          });
+        }, 4000);
+      }, 4000);
+    }, 4000);
+  }, [formData.stablecoinName, formData.stablecoinSymbol]);
+
   // Watch for transaction confirmation
   useEffect(() => {
     if (waitingForConfirmation && isConfirmed) {
@@ -31,7 +54,7 @@ export default function Home() {
       setProgressStatus('kyc-pending');
       simulateProgress();
     }
-  }, [isConfirmed, waitingForConfirmation]);
+  }, [isConfirmed, waitingForConfirmation, simulateProgress]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -92,41 +115,21 @@ export default function Home() {
     }
   };
 
-  const simulateProgress = () => {
-    // Simulate KYC approval after 4 seconds
-    setTimeout(() => {
-      setProgressStatus('kyc-approved');
-      
-      // Simulate deployment after another 4 seconds
-      setTimeout(() => {
-        setProgressStatus('deploying');
-        
-        // Simulate deployment completion after another 4 seconds
-        setTimeout(() => {
-          setProgressStatus('deployed');
-          setDeployedContract({
-            name: formData.stablecoinName,
-            symbol: formData.stablecoinSymbol,
-            address: '0x' + Math.random().toString(16).substr(2, 40) // Mock contract address
-          });
-        }, 4000);
-      }, 4000);
-    }, 4000);
-  };
-
   return (
     <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="flex items-center justify-center mb-4">
-            <img 
-              src="/logo_new.png" 
-              alt="StableMint Core" 
-              className="h-20 w-72 mr-4"
-            />
-            {/* <h1 className="text-4xl font-bold text-gray-900">StableMint Core</h1> */}
-          </div>
+            <div className="flex items-center justify-center mb-4">
+              <Image 
+                src="/logo_new.png" 
+                alt="StableMint Core" 
+                width={288}
+                height={80}
+                className="h-20 w-72 mr-4"
+              />
+              {/* <h1 className="text-4xl font-bold text-gray-900">StableMint Core</h1> */}
+            </div>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Launch your institution&apos;s stablecoin on Kadena EVM with compliance and security built-in
           </p>
